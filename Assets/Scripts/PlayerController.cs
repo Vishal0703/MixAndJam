@@ -6,52 +6,82 @@ public partial class PlayerController : MonoBehaviour
     [SerializeField] private float moveSpeed = 10f;
     [SerializeField] private float runSpeed = 20f;
     [SerializeField] private float rotationRatePerSecond = 10f;
-    [SerializeField] private float jumpHeight = 3f;
-    [SerializeField] private float descendingGravityMultiplier = 1f; 
+    [SerializeField] private float maxJumpHeight = 3f;
     [SerializeField] private float ascendingGravityMultiplier = 1f;
+    [SerializeField] private float descendingGravityMultiplier = 1f; 
     [SerializeField] private Transform groundCheckTransform;
     [SerializeField] private float groundCheckRadius = 0.3f;
     [SerializeField] private LayerMask groundLayerMask;
     
     private PlayerInputManager playerInputManager;
     private CharacterController characterController;
-    private Rigidbody rigidbody;
     
     private bool isMoving;
     private Vector3 currentMovement;
     private bool jumpStart;
     private float charachterYVelocity;
+    private float gravity = -9.8f;
 
-    private bool IsGrounded => GroundCheck();
+    //private bool IsGrounded => GroundCheck();
 
-    private bool GroundCheck()
-    {
-        return Physics.OverlapSphere(groundCheckTransform.position, groundCheckRadius, groundLayerMask, QueryTriggerInteraction.Ignore) != null;
+    //private bool GroundCheck()
+    //{
+    //    return Physics.OverlapSphere(groundCheckTransform.position, groundCheckRadius, groundLayerMask, QueryTriggerInteraction.Ignore) != null;
            
-    }
+    //}
 
     private void Awake()
     {
         playerInputManager = GetComponent<PlayerInputManager>();
         characterController = GetComponent<CharacterController>();
-        rigidbody = GetComponent<Rigidbody>();
     }
 
     private void Update()
     {
-        CalculateMovement();
-        Jump();
-        characterController.Move(moveSpeed * Time.deltaTime * currentMovement);
+        CalculateXZMovement();
+        CalculateYMovement();
+        //Jump();
+        characterController.Move(currentMovement * Time.deltaTime);
         RotatePlayer();
     }
 
-    private void CalculateMovement()
+    private void CalculateYMovement()
     {
-        currentMovement.x = playerInputManager.CurrentMovementInput.x;
-        currentMovement.z = playerInputManager.CurrentMovementInput.y;
+        var onGroundAndJumpStart = characterController.isGrounded && playerInputManager.IsJumping;
+        var onGroundIdle = characterController.isGrounded && !playerInputManager.IsJumping;
+        var onAirAscending = !characterController.isGrounded && currentMovement.y >= 0f;
+        var onAirDescending = !characterController.isGrounded && currentMovement.y < 0f;
+
+        if (onGroundAndJumpStart)
+        {
+            var initialVelocity = Mathf.Sqrt(2 * Mathf.Abs(gravity) * maxJumpHeight);
+            currentMovement.y = initialVelocity;
+        }
+        else if(onGroundIdle)
+        {
+            currentMovement.y = -0.5f;
+        }
+        else if(onAirAscending)
+        {
+            currentMovement.y += 0.5f * gravity * ascendingGravityMultiplier * Time.deltaTime;
+        }
+        else if(onAirDescending)
+        {
+            currentMovement.y += 0.5f * gravity * descendingGravityMultiplier * Time.deltaTime;
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        
+    }
+
+    private void CalculateXZMovement()
+    {
+        float runMultiplier = playerInputManager.IsRunning ? runSpeed / moveSpeed : 1f;
+        currentMovement.x = playerInputManager.CurrentMovementInput.x * runMultiplier * moveSpeed;
+        currentMovement.z = playerInputManager.CurrentMovementInput.y * runMultiplier * moveSpeed;
         isMoving = currentMovement.x != 0 || currentMovement.z != 0;
-        float runMultiplier = playerInputManager.IsRunning ? runSpeed/moveSpeed : 1;
-        currentMovement *= runMultiplier;
     }
 
     private void Jump()
@@ -67,15 +97,19 @@ public partial class PlayerController : MonoBehaviour
             jumpStart = false;
         }
 
-        if(jumpStart && IsGrounded)
+        if(jumpStart && characterController.isGrounded)
         {
-            var initialVelocity = Mathf.Sqrt(2 * Physics.gravity.magnitude * ascendingGravityMultiplier * jumpHeight);
-            rigidbody.velocity = rigidbody.velocity.SetDirectionalValue(y : initialVelocity);
-            Debug.Log($"Initial velocity given : {initialVelocity}, rigidbody velocity : {rigidbody.velocity}");
+            var initialVelocity = Mathf.Sqrt(2 * Physics.gravity.magnitude * ascendingGravityMultiplier * maxJumpHeight);
+            currentMovement = currentMovement.SetDirectionalValue(y: initialVelocity);
         }
-
-        charachterYVelocity = rigidbody.velocity.y >= -1f ? rigidbody.velocity.y : -1f;
-        currentMovement.SetDirectionalValue(y: charachterYVelocity);
+        else if(characterController.isGrounded)
+        {
+            currentMovement.y = -0.5f; // just a downward push for grounded case
+        }
+        else
+        {
+            currentMovement.y += -Physics.gravity.magnitude * ascendingGravityMultiplier * Time.deltaTime;
+        }
     }
 
     private void RotatePlayer()
