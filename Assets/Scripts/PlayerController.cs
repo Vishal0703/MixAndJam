@@ -8,16 +8,18 @@ public partial class PlayerController : MonoBehaviour
     [SerializeField] private float rotationRatePerSecond = 10f;
     [SerializeField] private float maxJumpHeight = 2f;
     [SerializeField] private float ascendingGravityMultiplier = 2f;
-    [SerializeField] private float descendingGravityMultiplier = 4f; 
+    [SerializeField] private float descendingGravityMultiplier = 4f;
+    [SerializeField] private GameEvent jumpEvent;
+    [SerializeField] private GameEvent landEvent;
+    public bool IsMoving { get; private set; }
 
     private PlayerInputManager playerInputManager;
     private CharacterController characterController;
     
-    private bool isMoving;
     private Vector3 currentVelocity;
-    private bool jumpStart;
     private readonly float gravity = -9.8f;
     private bool isJumpAllowed = true;
+    private bool prevCharacterControllerGroundedState;
 
     private void Awake()
     {
@@ -44,6 +46,7 @@ public partial class PlayerController : MonoBehaviour
         {
             var initialVelocity = Mathf.Sqrt(2 * Mathf.Abs(gravity) * maxJumpHeight);
             currentVelocity.y = initialVelocity;
+            jumpEvent.Raise();
             isJumpAllowed = false;
         }
         else if(onGroundIdle)
@@ -64,6 +67,11 @@ public partial class PlayerController : MonoBehaviour
             isJumpAllowed = true;
         }
 
+        if(!prevCharacterControllerGroundedState && characterController.isGrounded)
+        {
+            landEvent.Raise();
+        }
+        prevCharacterControllerGroundedState = characterController.isGrounded;
     }
 
     private void CalculateXZMovement()
@@ -71,12 +79,12 @@ public partial class PlayerController : MonoBehaviour
         float runMultiplier = playerInputManager.IsRunning ? runSpeed / moveSpeed : 1f;
         currentVelocity.x = playerInputManager.CurrentMovementInput.x * runMultiplier * moveSpeed;
         currentVelocity.z = playerInputManager.CurrentMovementInput.y * runMultiplier * moveSpeed;
-        isMoving = currentVelocity.x != 0 || currentVelocity.z != 0;
+        IsMoving = currentVelocity.x != 0 || currentVelocity.z != 0;
     }
 
     private void RotatePlayer()
     {
-        if(isMoving)
+        if(IsMoving)
         {
             var initialRotation = transform.rotation;
             var finalRotation = Quaternion.LookRotation(new Vector3(playerInputManager.CurrentMovementInput.x, 0f, playerInputManager.CurrentMovementInput.y));
