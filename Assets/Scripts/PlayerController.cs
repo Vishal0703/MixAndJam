@@ -19,7 +19,7 @@ public partial class PlayerController : MonoBehaviour
     private Vector3 currentVelocity;
     private readonly float gravity = -9.8f;
     private bool isJumpAllowed = true;
-    private bool prevCharacterControllerGroundedState;
+    private bool prevCharacterControllerGroundedState = true;
 
     private void Awake()
     {
@@ -37,6 +37,8 @@ public partial class PlayerController : MonoBehaviour
 
     private void CalculateYMovement()
     {
+        LandEventRaise(); //This must be called before raising jumpevent, since in the same frame player can land an jump again, and calling this later will make the isJumping variable of animator false
+
         var onGroundAndJumpStart = characterController.isGrounded && playerInputManager.IsJumping;
         var onGroundIdle = characterController.isGrounded && !playerInputManager.IsJumping;
         var onAirAscending = !characterController.isGrounded && currentVelocity.y >= 0f;
@@ -49,25 +51,29 @@ public partial class PlayerController : MonoBehaviour
             jumpEvent.Raise();
             isJumpAllowed = false;
         }
-        else if(onGroundIdle)
+        else if (onGroundIdle)
         {
             currentVelocity.y = -0.5f;
         }
-        else if(onAirAscending)
+        else if (onAirAscending)
         {
             currentVelocity.y += 0.5f * gravity * ascendingGravityMultiplier * Time.deltaTime;
         }
-        else if(onAirDescending)
+        else if (onAirDescending)
         {
             currentVelocity.y += 0.5f * gravity * descendingGravityMultiplier * Time.deltaTime;
         }
 
-        if(!isJumpAllowed && !playerInputManager.IsJumping)
+        if (!isJumpAllowed && !playerInputManager.IsJumping)
         {
             isJumpAllowed = true;
         }
 
-        if(!prevCharacterControllerGroundedState && characterController.isGrounded)
+    }
+
+    private void LandEventRaise()
+    {
+        if (!prevCharacterControllerGroundedState && characterController.isGrounded)
         {
             landEvent.Raise();
         }
