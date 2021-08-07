@@ -9,7 +9,6 @@ public class PlayerInputManager : MonoBehaviour
     public Vector2 CurrentMovementInput { get; private set; }
     public float CurrentRotationInput { get; private set; }
     public bool IsRunning { get; private set; }
-
     public bool IsJumping { get; private set; }
     
     private void Awake()
@@ -27,10 +26,10 @@ public class PlayerInputManager : MonoBehaviour
         playerInput.CharacterControls.Rotate.performed += SetRotationValue;
         playerInput.CharacterControls.Rotate.canceled += SetRotationValue;
 
-        playerInput.CharacterControls.Run.performed += SetRunValue;
+        playerInput.CharacterControls.Run.started += SetRunValue;
         playerInput.CharacterControls.Run.canceled += SetRunValue;
 
-        playerInput.CharacterControls.Jump.performed += SetJumpValue;
+        playerInput.CharacterControls.Jump.started += SetJumpValue;
         playerInput.CharacterControls.Jump.canceled += SetJumpValue;
     }
 
