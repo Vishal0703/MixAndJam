@@ -4,6 +4,7 @@ on: workflow_dispatch
 
 env:
   UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+  GAME_NAME: Farreign
   ITCH_USERNAME: luffy703
   ITCH_GAME_ID: farreign
 
@@ -106,10 +107,11 @@ jobs:
       - uses: game-ci/unity-builder@v2
         with:
           targetPlatform: StandaloneWindows64
+          buildName: ${{ env.GAME_NAME }}
 
       - uses: actions/upload-artifact@v2
         with:
-          name: build-StandaloneWindows64
+          name: ${{ env.GAME_NAME }}-StandaloneWindows64
           path: build/StandaloneWindows64
 
   # deployWebGL:
@@ -151,8 +153,8 @@ jobs:
 
       - uses: actions/download-artifact@v2
         with:
-          name: build-StandaloneWindows64
-          path: build
+          name: ${{ env.GAME_NAME }}-StandaloneWindows64
+          path: build/StandaloneWindows64
 
       - name: Deploy to Itch.io
         uses: KikimoraGames/itch-publish@v0.0.3
