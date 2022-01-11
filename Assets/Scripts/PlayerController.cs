@@ -37,7 +37,7 @@ public partial class PlayerController : MonoBehaviour
 
     private void CalculateYMovement()
     {
-        LandEventRaise(); //This must be called before raising jumpevent, since in the same frame player can land an jump again, and calling this later will make the isJumping variable of animator false
+        LandEventRaise(); //This must be called before raising jumpevent, since in the same frame player can land and jump again, and calling this later will make the isJumping variable of animator false
 
         var onGroundAndJumpStart = characterController.isGrounded && playerInputManager.IsJumping;
         var onGroundIdle = characterController.isGrounded && !playerInputManager.IsJumping;
@@ -64,7 +64,7 @@ public partial class PlayerController : MonoBehaviour
             currentVelocity.y += 0.5f * gravity * descendingGravityMultiplier * Time.deltaTime;
         }
 
-        if (!isJumpAllowed && !playerInputManager.IsJumping)
+        if (!isJumpAllowed && !playerInputManager.IsJumping) // this ensures next jump is only allowed to happen if player releases jump button, i.e. keeping button pressed continuously won't make it jump again
         {
             isJumpAllowed = true;
         }
