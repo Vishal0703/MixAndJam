@@ -1,6 +1,7 @@
 name: GameCI Template 🎮
 
-on: workflow_dispatch
+# on: workflow_dispatch
+on: push
 
 env:
   UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
@@ -132,7 +133,7 @@ jobs:
         uses: JamesIves/github-pages-deploy-action@4.1.4
         with:
           branch: gh-pages
-          folder: build/WebGL
+          folder: build
 
       - name: Deploy to Itch.io
         uses: KikimoraGames/itch-publish@v0.0.3
