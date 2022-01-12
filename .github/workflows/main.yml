@@ -57,33 +57,34 @@ jobs:
     #       name: Test results (${{ matrix.testMode }})
     #       path: ${{ steps.testRunner.outputs.artifactsPath }}
 
-  # buildWebGL:
-  #   needs: testRunner
-  #   name: Build for WebGL 🖥️
-  #   runs-on: ubuntu-latest
-  #   strategy:
-  #     fail-fast: false
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v2
-  #       # If needed use LFS from above example
+  buildWebGL:
+    needs: testRunner
+    name: Build for WebGL 🖥️
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        # If needed use LFS from above example
 
-  #     - name: Restore Library cache
-  #       uses: actions/cache@v2
-  #       with:
-  #         path: Library
-  #         key: Library-build-WebGL
-  #         restore-keys: |
-  #           Library-build-
-  #           Library-
-  #     - uses: game-ci/unity-builder@v2
-  #       with:
-  #         targetPlatform: WebGL
+      - name: Restore Library cache
+        uses: actions/cache@v2
+        with:
+          path: Library
+          key: Library-build-WebGL
+          restore-keys: |
+            Library-build-
+            Library-
+      - uses: game-ci/unity-builder@v2
+        with:
+          targetPlatform: WebGL
+          buildName: ${{ env.GAME_NAME }}
 
-  #     - uses: actions/upload-artifact@v2
-  #       with:
-  #         name: build-WebGL
-  #         path: build/WebGL
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ${{ env.GAME_NAME }}-WebGL
+          path: build/WebGL
 
   buildWindows:
     # needs: testRunner
@@ -114,34 +115,34 @@ jobs:
           name: ${{ env.GAME_NAME }}-StandaloneWindows64
           path: build/StandaloneWindows64
 
-  # deployWebGL:
-  #   needs: buildWebGL
-  #   name: Deploy WebGL build to Github Pages and itch.io 🚀
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout code
-  #       uses: actions/checkout@v2
+  deployWebGL:
+    needs: buildWebGL
+    name: Deploy WebGL build to Github Pages and itch.io 🚀
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-  #     - uses: actions/download-artifact@v2
-  #       with:
-  #         name: build-WebGL
-  #         path: build
+      - uses: actions/download-artifact@v2
+        with:
+          name: ${{ env.GAME_NAME }}-WebGL
+          path: build
 
-  #     - name: Deploy to Github pages🚀
-  #       uses: JamesIves/github-pages-deploy-action@4.1.4
-  #       with:
-  #         branch: gh-pages
-  #         folder: build/WebGL
+      - name: Deploy to Github pages🚀
+        uses: JamesIves/github-pages-deploy-action@4.1.4
+        with:
+          branch: gh-pages
+          folder: build/WebGL
 
-  #     - name: Deploy to Itch.io
-  #       uses: KikimoraGames/itch-publish@v0.0.3
-  #       with:
-  #         butlerApiKey: ${{secrets.BUTLER_API_KEY}}
-  #         gameData: ./build
-  #         itchUsername: ${{env.ITCH_USERNAME}}
-  #         itchGameId: ${{ env.ITCH_GAME_ID }}
-  #         buildChannel: webgl
-  #         buildNumber: ${{ needs.version.outputs.version_hash }}
+      - name: Deploy to Itch.io
+        uses: KikimoraGames/itch-publish@v0.0.3
+        with:
+          butlerApiKey: ${{secrets.BUTLER_API_KEY}}
+          gameData: ./build
+          itchUsername: ${{env.ITCH_USERNAME}}
+          itchGameId: ${{ env.ITCH_GAME_ID }}
+          buildChannel: webgl
+          buildNumber: ${{ needs.version.outputs.version_hash }}
 
   deployWindows:
     needs: buildWindows
